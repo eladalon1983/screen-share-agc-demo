@@ -7,6 +7,7 @@
  */
 
 // This code is adapted from https://webrtc.github.io/samples/
+// The audio-meter is adapted from https://github.com/cwilso/volume-meter/
 
 "use strict";
 
@@ -115,6 +116,8 @@ function handleSuccess(stream) {
   gumVideo.srcObject = stream;
 
   mimeType = getSupportedMimeTypes()[0]; // Crash and burn if no options, why not...
+
+  startMeter(stream);
 }
 
 async function init(constraints) {
@@ -142,12 +145,10 @@ async function init(constraints) {
 document.querySelector("button#start").addEventListener("click", async () => {
   document.querySelector("button#start").disabled = true;
 
-  const hasEchoCancellation = document.querySelector("#echoCancellation").checked;
   const hasAutoGainControl = document.querySelector("#autoGainControl").checked;
 
   let constraints = {
     audio: {
-      echoCancellation: hasEchoCancellation,
       autoGainControl: hasAutoGainControl,
     },
     video: {
@@ -169,3 +170,98 @@ document.querySelector("button#start").addEventListener("click", async () => {
   console.log("Using media constraints:", constraints);
   await init(constraints);
 });
+
+/////////////////
+
+let audioContext = null;
+let meter = null;
+let rafID = null;
+let mediaStreamSource = null;
+
+const canvasContext = document.getElementById("meter").getContext("2d");
+
+function createAudioMeter(audioContext, clipLevel, averaging, clipLag) {
+  const processor = audioContext.createScriptProcessor(512);
+  processor.onaudioprocess = volumeAudioProcess;
+  processor.clipping = false;
+  processor.lastClip = 0;
+  processor.volume = 0;
+  processor.clipLevel = clipLevel || 0.98;
+  processor.averaging = averaging || 0.95;
+  processor.clipLag = clipLag || 750;
+
+  // this will have no effect, since we don't copy the input to the output,
+  // but works around a current Chrome bug.
+  processor.connect(audioContext.destination);
+
+  processor.checkClipping = function () {
+    if (!this.clipping) return false;
+    if (this.lastClip + this.clipLag < window.performance.now()) this.clipping = false;
+    return this.clipping;
+  };
+
+  processor.shutdown = function () {
+    this.disconnect();
+    this.onaudioprocess = null;
+  };
+
+  return processor;
+}
+
+function volumeAudioProcess(event) {
+  const buf = event.inputBuffer.getChannelData(0);
+  const bufLength = buf.length;
+  let sum = 0;
+  let x;
+
+  // Do a root-mean-square on the samples: sum up the squares...
+  for (let i = 0; i < bufLength; i++) {
+    x = buf[i];
+    if (Math.abs(x) >= this.clipLevel) {
+      this.clipping = true;
+      this.lastClip = window.performance.now();
+    }
+    sum += x * x;
+  }
+
+  // ... then take the square root of the sum.
+  const rms = Math.sqrt(sum / bufLength);
+
+  // Now smooth this out with the averaging factor applied
+  // to the previous sample - take the max here because we
+  // want "fast attack, slow release."
+  this.volume = Math.max(rms, this.volume * this.averaging);
+}
+
+function startMeter(stream) {
+  // grab an audio context
+  audioContext = new AudioContext();
+
+  // Create an AudioNode from the stream.
+  mediaStreamSource = audioContext.createMediaStreamSource(stream);
+
+  // Create a new volume meter and connect it.
+  meter = createAudioMeter(audioContext);
+  mediaStreamSource.connect(meter);
+
+  // kick off the visual updating
+  drawLoop();
+}
+
+function drawLoop(time) {
+  const WIDTH = 500;
+  const HEIGHT = 50;
+
+  // clear the background
+  canvasContext.clearRect(0, 0, WIDTH, HEIGHT);
+
+  // check if we're currently clipping
+  if (meter.checkClipping()) canvasContext.fillStyle = "red";
+  else canvasContext.fillStyle = "green";
+
+  // draw a bar based on the current volume
+  canvasContext.fillRect(0, 0, meter.volume * WIDTH * 1.4, HEIGHT);
+
+  // set up the next visual callback
+  rafID = window.requestAnimationFrame(drawLoop);
+}

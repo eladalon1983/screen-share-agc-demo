@@ -19,19 +19,20 @@
 
     <title>Screen-share AGC</title>
 
-    <link href="//fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="css/main.css" />
   </head>
 
   <body>
     <div id="container">
       <h1>
-        <a href="//webrtc.github.io/samples/" title="WebRTC samples homepage">Copycat Productions Ltd.</a>
+        <a href="#" title="Copycat Productions Ltd.">Copycat Productions Ltd.</a>
         <span>Screen-share AGC</span>
       </h1>
 
-      <video id="gum" playsinline autoplay muted></video>
-      <video id="recorded" playsinline loop></video>
+      <div>
+        <video id="gum" playsinline autoplay muted></video>
+        <video id="recorded" playsinline loop></video>
+      </div>
 
       <div>
         <button id="start">Start capture</button>
@@ -48,13 +49,17 @@
         <label for="mic">Microphone</label>
         <h4>Constraints</h4>
         <p>Auto gain control: <input type="checkbox" id="autoGainControl" /></p>
-        <p>Echo cancellation: <input type="checkbox" id="echoCancellation" /></p>
       </div>
 
       <div>
         <span id="errorMsg"></span>
       </div>
 
-    <script src="js/main.js" async></script>
+      <div>
+        <!-- <canvas id="meter" width="500" height="50" style="visibility: hidden;"></canvas> -->
+        <canvas id="meter" width="500" height="50"></canvas>
+      </div>
+      <script src="js/main.js" async></script>
+    </div>
   </body>
 </html>
