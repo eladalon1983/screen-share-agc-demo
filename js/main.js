@@ -15,7 +15,6 @@ let mediaRecorder;
 let recordedBlobs;
 let mimeType;
 
-const errorMsgElement = document.querySelector("span#errorMsg");
 const recordedVideo = document.querySelector("video#recorded");
 
 const isScreenShareRadio = document.getElementById("screen-share");
@@ -86,7 +85,6 @@ function startRecording() {
     mediaRecorder = new MediaRecorder(window.stream, options);
   } catch (e) {
     console.error("Exception while creating MediaRecorder:", e);
-    errorMsgElement.innerHTML = `Exception while creating MediaRecorder: ${JSON.stringify(e)}`;
     return;
   }
 
@@ -107,22 +105,9 @@ function stopRecording() {
   mediaRecorder.stop();
 }
 
-function handleSuccess(stream) {
-  recordButton.disabled = false;
-  console.log("Stream:", stream);
-  window.stream = stream;
-
-  const gumVideo = document.querySelector("video#gum");
-  gumVideo.srcObject = stream;
-
-  mimeType = getSupportedMimeTypes()[0]; // Crash and burn if no options, why not...
-
-  startMeter(stream);
-}
-
 async function init(constraints) {
+  let stream;
   try {
-    let stream;
     if (isMicRadio.checked) {
       stream = await navigator.mediaDevices.getUserMedia(constraints);
     } else if (isScreenShareRadio.checked) {
@@ -134,12 +119,21 @@ async function init(constraints) {
     } else {
       throw new Error("Unsupported input type.");
     }
-    handleSuccess(stream);
   } catch (e) {
-    // TODO: Not necessarily gUM.
-    console.error("navigator.getUserMedia error:", e);
-    errorMsgElement.innerHTML = `navigator.getUserMedia error:${e.toString()}`;
+    console.error("Error:", e);
+    return;
   }
+
+  recordButton.disabled = false;
+  console.log("Stream:", stream);
+  window.stream = stream;
+
+  const gumVideo = document.querySelector("video#gum");
+  gumVideo.srcObject = stream;
+
+  mimeType = getSupportedMimeTypes()[0]; // Crash and burn if no options, why not...
+
+  startMeter(stream);
 }
 
 document.querySelector("button#start").addEventListener("click", async () => {
