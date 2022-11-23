@@ -111,7 +111,7 @@ function stopRecording() {
 
 function handleSuccess(stream) {
   recordButton.disabled = false;
-  console.log("getUserMedia() got stream:", stream); // TODO: Not necessarily gUM.
+  console.log("Stream:", stream);
   window.stream = stream;
 
   const gumVideo = document.querySelector("video#gum");
