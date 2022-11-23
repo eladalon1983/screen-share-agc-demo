@@ -14,12 +14,14 @@
 let mediaRecorder;
 let recordedBlobs;
 let mimeType;
+let stream;
 
 const recordedVideo = document.querySelector("video#recorded");
 
 const isScreenShareRadio = document.getElementById("screen-share");
 const isMicRadio = document.getElementById("mic");
 
+const startButton = document.querySelector("button#start");
 const recordButton = document.querySelector("button#record");
 recordButton.addEventListener("click", () => {
   if (recordButton.textContent === "Start Recording") {
@@ -85,6 +87,7 @@ function startRecording() {
     mediaRecorder = new MediaRecorder(window.stream, options);
   } catch (e) {
     console.error("Exception while creating MediaRecorder:", e);
+    reset();
     return;
   }
 
@@ -106,7 +109,6 @@ function stopRecording() {
 }
 
 async function init(constraints) {
-  let stream;
   try {
     if (isMicRadio.checked) {
       stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -121,6 +123,7 @@ async function init(constraints) {
     }
   } catch (e) {
     console.error("Error:", e);
+    reset();
     return;
   }
 
@@ -136,8 +139,8 @@ async function init(constraints) {
   startMeter(stream);
 }
 
-document.querySelector("button#start").addEventListener("click", async () => {
-  document.querySelector("button#start").disabled = true;
+startButton.addEventListener("click", async () => {
+  startButton.disabled = true;
 
   const hasAutoGainControl = document.querySelector("#autoGainControl").checked;
 
@@ -164,6 +167,20 @@ document.querySelector("button#start").addEventListener("click", async () => {
   console.log("Using media constraints:", constraints);
   await init(constraints);
 });
+
+function reset() {
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+    stream = undefined;
+  }
+
+  document.getElementById('gum').srcObject = undefined;
+
+  startButton.disabled = false;
+  playButton.disabled = true;
+  recordButton.disabled = true;
+  downloadButton.disabled = true;
+}
 
 /////////////////
 
