@@ -6,12 +6,9 @@
  *  tree.
  */
 
-// This code is adapted from
-// https://rawgit.com/Miguelao/demos/master/mediarecorder.html
+// This code is adapted from https://webrtc.github.io/samples/
 
 "use strict";
-
-/* globals MediaRecorder */
 
 let mediaRecorder;
 let recordedBlobs;
