@@ -226,11 +226,12 @@ textarea {
 }
 
 video {
+  vertical-align: top;
+  --width: 49%;
+  width: var(--width);
+  height: calc(var(--width) * 0.5625);
   background: #222;
   margin: 0 0 20px 0;
-  --width: 100%;
-  width: var(--width);
-  height: calc(var(--width) * 0.75);
 }
 
 ul {
@@ -287,13 +288,6 @@ button:last-of-type {
 p.borderBelow {
   margin: 0 0 20px 0;
   padding: 0 0 20px 0;
-}
-
-video {
-  vertical-align: top;
-  --width: 25vw;
-  width: var(--width);
-  height: calc(var(--width) * 0.5625);
 }
 
 video:last-of-type {
